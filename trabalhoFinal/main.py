@@ -6,6 +6,7 @@ from multiprocessing import Process
 import csv
 
 
+# Gera um .csv por imagem dentro da pasta do experimento atual
 def salvar_resultados_csv(nome_arquivo, k, info_original, info_gerada):
     with open(nome_arquivo.replace(".png", ".csv"), "a", newline="") as csvfile:
         colunas = [
@@ -33,15 +34,18 @@ def salvar_resultados_csv(nome_arquivo, k, info_original, info_gerada):
         )
 
 
+# Obtem informações da imagem: Tupla de resolução, Tamanho da imagem em kb, Cores unicas
 def obter_informacoes_imagem(imagem, imagem_path):
     # Obtém resolução, tamanho em KB e quantidade de cores únicas
     resolucao = imagem.shape[:2]
     # Obtém o tamanho real dos dados codificados
     tamanho_kb = os.stat(imagem_path).st_size / 1024.0
+    # Obtem as cores unicas
     cores_unicas = len(set(tuple(pixel) for linha in imagem for pixel in linha))
     return resolucao, tamanho_kb, cores_unicas
 
 
+# Aplica o K-means e salva no .csv
 def aplicar_kmeans_e_salvar(imagem, k_values, pasta_saida, nome_original, imagem_path):
     def processar(k):
         # Aplicar o algoritmo K-Means
@@ -80,16 +84,19 @@ def aplicar_kmeans_e_salvar(imagem, k_values, pasta_saida, nome_original, imagem
             pasta_saida + nome_original[1:], k, info_original, info_gerada
         )
 
+    # Cria um processo para cada k na mesma imagem
     process = []
     for k in k_values:
         proc = Process(target=processar, args=(k,))
         process.append(proc)
         proc.start()
 
+    # Completar processos
     for proc in process:
         proc.join()
 
 
+# Criar um novo diretório
 def makedirs(dir: str):
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -114,7 +121,6 @@ if __name__ == "__main__":
     pasta_saida = makedirs("resultados_kmeans_" + str(datetime.now()))
 
     procs = []
-
     for imagem_path in imagens:
         # Ler a imagem original
         imagem_original = cv2.imread(imagem_path)
@@ -127,6 +133,7 @@ if __name__ == "__main__":
         )
 
         # Aplicar K-Means e salvar imagens
+        # Cria um processo para cada imagem
         proc = Process(
             target=aplicar_kmeans_e_salvar,
             args=(imagem_original, valores_k, pasta_local, nome_original, imagem_path),
