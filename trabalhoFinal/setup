@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# Adicione a permissão de execução rodando
+# chmod +x setup
+
+path="setupServer/"
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "" ]; then
+    cat "${path}readme.md"
+    exit 1
+fi
+
+if [ "$1" == "-e" ] && [ "$2" == "global" ]; then
+    nano "${path}globalProcess.txt"
+    exit 1
+elif [ "$1" == "-e" ] && [ "$2" == "position" ]; then
+    nano "${path}positionProcess.txt"
+    exit 1
+elif  [ "$1" == "-e" ]; then
+    echo "Comando $2 não existe!"
+    echo "Uso: $0 -e [global|position]"
+    exit 1
+fi
+
+if [ "$2" == "-s" ]; then
+    aux=$1
+    want_kill=-15
+    if [ "$3" == "-k" ]; then
+        shift 3
+        want_kill=-9
+    else
+        shift 2
+    fi
+    current_dir=$(dirname "$0")
+    for py_file in $(find "$current_dir" -maxdepth 1 -type f -name "*.py"); do
+        for arg in "$@"; do
+            if [ "${arg:(-3)}" == ".py" ]; then
+                arg="${arg:0:-3}"
+            fi
+
+            if [ "$py_file" == "./${arg}.py" ]; then
+                process_count=$(ps aux | grep -v grep | grep -c "$py_file")
+                pids=$(pgrep -f "${arg}.py")
+                IFS=$'\n' read -rd '' -a pid_array <<< "$pids"
+
+                if [ "$aux" == "start" ]; then
+                    if [ "$process_count" -eq 0 ]; then
+                        echo "[$(date)][Iniciando processo ${py_file:2}]"
+                        nohup python3 "${py_file:2}" >> Znohup/"${py_file:2:-3}.out" &
+                    fi
+                
+                elif [ "$aux" == "restart" ]; then  
+                    for pid in "${pid_array[@]}"; do
+                        kill $want_kill $pid
+                    done
+                    echo "[$(date)][Reiniciando processo ${py_file:2}]"
+                    nohup python3 "${py_file:2}" >> Znohup/"${py_file:2:-3}.out" &
+                
+                elif [ "$aux" == "stop" ]; then
+                    echo "[$(date)][Terminando processo ${py_file:2}]"
+                    for pid in "${pid_array[@]}"; do
+                        kill $want_kill $pid
+                    done
+                
+                else
+                    echo "Comando $aux não existe!"
+                    echo "Uso: $0 [start|restart|stop] -s argv argv argv..."
+
+                fi
+            fi
+        done
+    done
+    exit 1
+fi
+
+if [ "$2" != "position" ]; then
+    if [ -n "$2" ]; then
+        echo "Comando $2 não existe!"
+        echo "Uso: $0 [start|restart|stop] [position](opcional)"
+        exit 1
+    fi
+fi
+
+if [ "$1" == "start" ]; then
+    python3 "${path}startServer.py" $2
+    echo "[`date`][Iniciando o servidor...]"
+
+elif [ "$1" == "restart" ]; then
+    python3 "${path}restartServer.py" $2
+    echo "[`date`][Reiniciando o servidor...]"
+
+elif [ "$1" == "stop" ]; then
+    python3 "${path}stopServer.py" $2
+    echo "[`date`][Parando o servidor...]"
+
+else
+    echo "Comando $1 não existe!"
+    echo "Uso: $0 [start|restart|stop] [position](opcional)"
+    exit 1
+
+fi
