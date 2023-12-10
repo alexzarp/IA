@@ -108,7 +108,7 @@ if __name__ == "__main__":
     ]
 
     # Valores de k
-    valores_k = [2, 3, 4, 5, 6, 7, 8]
+    valores_k = [3, 4, 5, 6, 7, 8, 10]
 
     # Pasta de saída para os resultados
     pasta_saida = makedirs("resultados_kmeans_" + str(datetime.now()))
