@@ -11,6 +11,8 @@ def salvar_resultados_csv(nome_arquivo, k, info_original, info_gerada):
     with open(nome_arquivo.replace(".png", ".csv"), "a", newline="") as csvfile:
         colunas = [
             "K",
+            "Resolucao original",
+            "Resolucao gerada",
             "Tamanho KB Original",
             "Tamanho KB Gerado",
             "Cores unicas originais",
@@ -26,6 +28,12 @@ def salvar_resultados_csv(nome_arquivo, k, info_original, info_gerada):
         writer.writerow(
             {
                 "K": k,
+                "Resolucao original": str(info_original[0][0])
+                + "x"
+                + str(info_original[0][1]),
+                "Resolucao gerada": str(info_gerada[0][0])
+                + "x"
+                + str(info_gerada[0][1]),
                 "Tamanho KB Original": info_original[1],
                 "Tamanho KB Gerado": info_gerada[1],
                 "Cores unicas originais": info_original[2],
